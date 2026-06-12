@@ -2,7 +2,6 @@ import pandas as pd
 from langchain_community.document_loaders import DataFrameLoader
 from langchain_chroma import Chroma
 from langchain_community.embeddings import HuggingFaceBgeEmbeddings
-from langchain_text_splitters import CharacterTextSplitter
 
 
 class movie_rag:
@@ -20,15 +19,13 @@ class movie_rag:
         loader = DataFrameLoader(self.df, page_content_column=self.main_column)
         documents = loader.load()
 
-        # Save metadata for each document
         for i, doc in enumerate(documents):
             row = self.df.iloc[i]
             doc.metadata["title"] = str(row.get("title", "Unknown"))
             doc.metadata["type"] = str(row.get("type", ""))
             doc.metadata["release_year"] = str(row.get("release_year", ""))
             doc.metadata["rating"] = str(row.get("rating", ""))
-            doc.metadata["listed_in"] = str(row.get("listed_in", ""))
-            doc.metadata["country"] = str(row.get("country", ""))
+            doc.metadata["genre"] = str(row.get("listed_in", ""))
 
         reviews_vector_db = Chroma.from_documents(
             documents, self.embedding, persist_directory=self.chroma_path
@@ -36,11 +33,10 @@ class movie_rag:
         return reviews_vector_db
 
     def load_vector_database(self):
-        review_vector_db = Chroma(
+        return Chroma(
             persist_directory=self.chroma_path,
             embedding_function=self.embedding
         )
-        return review_vector_db
 
     def get_movie(self, question, k=5):
         vector_db = self.load_vector_database()
@@ -57,7 +53,6 @@ class movie_rag:
                 "type": doc.metadata.get("type", ""),
                 "release_year": doc.metadata.get("release_year", ""),
                 "rating": doc.metadata.get("rating", ""),
-                "genre": doc.metadata.get("listed_in", ""),
-                "country": doc.metadata.get("country", ""),
+                "genre": doc.metadata.get("genre", ""),
             })
         return results
